@@ -1,0 +1,6 @@
+{
+  "name": "Talk To Me (TTM) - System Architecture & Blueprint",
+  "description": "Comprehensive Mobile System Architecture Blueprint for Talk To Me (TTM): Shield Branding, Google Display Name Privacy, Native Real-time Screenshot Alerts, AES-256 Voice Notes, Zero-Knowledge PSI Contact Sync, and Anti-Hacker Hardening.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
