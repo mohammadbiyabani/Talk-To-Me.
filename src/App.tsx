@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
 import { UserProfile } from './types/chat';
-import { SignInScreen } from './components/auth/SignInScreen';
+import { SignIn } from './components/SignIn';
 import { ChatDashboard } from './components/chat/ChatDashboard';
 import { LegalTerms } from './components/LegalTerms';
 
 export default function App() {
-  // Main starting page: functional Sign-In screen (user is null initially)
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
+  // Explicit state management for authentication session
+  const [user, setUser] = useState<UserProfile | null>(() => {
     try {
-      const saved = localStorage.getItem('ttm_authenticated_user');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        // Only restore session if terms were agreed upon
+      const stored = localStorage.getItem('ttm_authenticated_user');
+      if (stored) {
+        const parsed = JSON.parse(stored);
         if (parsed && parsed.hasAcceptedTerms) {
           return parsed;
         }
@@ -22,75 +21,82 @@ export default function App() {
     }
   });
 
-  const [showGlobalLegalModal, setShowGlobalLegalModal] = useState<boolean>(false);
-  const [legalTab, setLegalTab] = useState<'all' | 'terms' | 'privacy' | 'dpdp'>('all');
+  const [showLegalModal, setShowLegalModal] = useState<boolean>(false);
+  const [legalModalTab, setLegalModalTab] = useState<'all' | 'terms' | 'privacy' | 'dpdp'>('all');
 
-  const openLegalModal = (tab: 'all' | 'terms' | 'privacy' | 'dpdp' = 'all') => {
-    setLegalTab(tab);
-    setShowGlobalLegalModal(true);
-  };
+  const isAuthenticated = Boolean(user && user.hasAcceptedTerms);
 
-  const handleSignIn = (user: UserProfile) => {
-    // Strictly validate that user has agreed to the Terms of Service & Privacy Policy
-    if (!user.hasAcceptedTerms) {
-      console.warn('Authentication halted: Mandatory acceptance of Terms & Conditions required.');
+  const handleSignIn = (newUser: UserProfile) => {
+    // Validate terms acceptance before setting authenticated state
+    if (!newUser.hasAcceptedTerms) {
+      console.warn('Authentication rejected: User must accept legal terms.');
       return;
     }
 
     const verifiedUser: UserProfile = {
-      ...user,
+      ...newUser,
       hasAcceptedTerms: true,
-      termsAcceptedAt: user.termsAcceptedAt || new Date().toISOString(),
+      termsAcceptedAt: newUser.termsAcceptedAt || new Date().toISOString(),
     };
 
-    setCurrentUser(verifiedUser);
+    setUser(verifiedUser);
     try {
       localStorage.setItem('ttm_authenticated_user', JSON.stringify(verifiedUser));
     } catch {
-      // ignore storage errors
+      // ignore local storage errors
     }
   };
 
   const handleSignOut = () => {
-    setCurrentUser(null);
+    setUser(null);
     try {
       localStorage.removeItem('ttm_authenticated_user');
     } catch {
-      // ignore storage errors
+      // ignore local storage errors
     }
   };
 
   const handleUpdateUser = (updatedUser: UserProfile) => {
-    setCurrentUser(updatedUser);
+    setUser(updatedUser);
     try {
       localStorage.setItem('ttm_authenticated_user', JSON.stringify(updatedUser));
     } catch {
-      // ignore storage errors
+      // ignore local storage errors
     }
+  };
+
+  const handleOpenLegalModal = (tab: 'all' | 'terms' | 'privacy' | 'dpdp' = 'all') => {
+    setLegalModalTab(tab);
+    setShowLegalModal(true);
   };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500 selection:text-slate-950">
-      {!currentUser ? (
-        <SignInScreen 
-          onSignIn={handleSignIn} 
-          onOpenLegalTerms={() => openLegalModal('all')}
+      {/* 
+        Authentication Flow:
+        If user is not authenticated, render <SignIn /> as the default starting view.
+        Once the user agrees to terms and logs in, switch to the main chat dashboard.
+      */}
+      {!isAuthenticated || !user ? (
+        <SignIn
+          onSignIn={handleSignIn}
+          onOpenLegalModal={() => handleOpenLegalModal('all')}
         />
       ) : (
         <ChatDashboard
-          currentUser={currentUser}
+          currentUser={user}
           onUpdateUser={handleUpdateUser}
           onSignOut={handleSignOut}
-          onOpenLegalTerms={() => openLegalModal('all')}
+          onOpenLegalTerms={() => handleOpenLegalModal('all')}
         />
       )}
 
-      {/* Global Terms & Privacy Policy Modal */}
+      {/* Global Legal Disclosures & Compliance Modal */}
       <LegalTerms
-        isOpen={showGlobalLegalModal}
-        onClose={() => setShowGlobalLegalModal(false)}
-        hasAccepted={Boolean(currentUser?.hasAcceptedTerms)}
-        initialTab={legalTab}
+        isOpen={showLegalModal}
+        onClose={() => setShowLegalModal(false)}
+        hasAccepted={Boolean(user?.hasAcceptedTerms)}
+        initialTab={legalModalTab}
       />
     </div>
   );
