@@ -14,8 +14,12 @@ import {
   CheckCheck,
   UserPlus,
   X,
-  Scale
+  Scale,
+  Radio,
+  FileText,
+  Image as ImageIcon
 } from 'lucide-react';
+import { isSupabaseConfigured } from '../../lib/supabase';
 
 interface ChatSidebarProps {
   conversations: Conversation[];
@@ -26,6 +30,7 @@ interface ChatSidebarProps {
   onSignOut: () => void;
   onStartNewChat: (contactName: string) => void;
   onOpenLegalTerms?: () => void;
+  onlineCount?: number;
 }
 
 export const ChatSidebar: React.FC<ChatSidebarProps> = ({
@@ -37,6 +42,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   onSignOut,
   onStartNewChat,
   onOpenLegalTerms,
+  onlineCount = 1,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'unread' | 'pinned'>('all');
@@ -88,9 +94,15 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
       <div className="p-3.5 border-b border-slate-800 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <TtmLogo size="sm" />
-          <span className="font-bold tracking-tight text-white text-sm">
-            Talk To Me
-          </span>
+          <div>
+            <span className="font-bold tracking-tight text-white text-sm block leading-none">
+              Talk To Me
+            </span>
+            <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1 mt-0.5">
+              <Radio className="w-2.5 h-2.5 animate-pulse text-emerald-400" />
+              <span>Realtime Presence ({onlineCount} Active)</span>
+            </span>
+          </div>
         </div>
 
         <button
@@ -167,6 +179,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
         ) : (
           filteredConversations.map((conv) => {
             const isActive = conv.id === activeConversationId;
+            const isTyping = conv.peer.isTyping;
+
             return (
               <button
                 key={conv.id}
@@ -211,12 +225,28 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                   </div>
 
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs text-slate-400 truncate flex items-center gap-1">
-                      {conv.lastMessage.text.includes('Voice') && (
-                        <Mic className="w-3 h-3 text-emerald-400 shrink-0" />
-                      )}
-                      <span className="truncate">{conv.lastMessage.text}</span>
-                    </p>
+                    {isTyping ? (
+                      /* Live Typing Indicator in Sidebar */
+                      <p className="text-xs text-emerald-400 font-medium flex items-center gap-1.5 animate-pulse">
+                        <span className="inline-flex gap-0.5">
+                          <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                          <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                          <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" />
+                        </span>
+                        <span className="italic">typing...</span>
+                      </p>
+                    ) : (
+                      <p className="text-xs text-slate-400 truncate flex items-center gap-1">
+                        {conv.lastMessage.text.includes('Voice') ? (
+                          <Mic className="w-3 h-3 text-emerald-400 shrink-0" />
+                        ) : conv.lastMessage.text.includes('image') || conv.lastMessage.text.includes('Image') ? (
+                          <ImageIcon className="w-3 h-3 text-teal-400 shrink-0" />
+                        ) : conv.lastMessage.text.includes('file') || conv.lastMessage.text.includes('document') ? (
+                          <FileText className="w-3 h-3 text-blue-400 shrink-0" />
+                        ) : null}
+                        <span className="truncate">{conv.lastMessage.text}</span>
+                      </p>
+                    )}
 
                     <div className="flex items-center gap-1.5 shrink-0">
                       {conv.isPinned && (
@@ -259,7 +289,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
               className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ring-2 ring-slate-950 ${getStatusColor(
                 currentUser.status
               )} hover:scale-110 transition-transform`}
-              title="Change Status"
+              title="Change Status (Synced via Supabase Presence)"
             />
           </div>
 
@@ -297,9 +327,9 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
 
         {/* Status Dropdown Popover */}
         {showStatusMenu && (
-          <div className="absolute bottom-16 left-3 w-40 bg-slate-900 border border-slate-800 rounded-xl p-1.5 shadow-xl z-30 text-xs">
+          <div className="absolute bottom-16 left-3 w-44 bg-slate-900 border border-slate-800 rounded-xl p-1.5 shadow-xl z-30 text-xs animate-fade-in">
             <div className="px-2 py-1 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
-              Set Status
+              Realtime Status
             </div>
             {(['online', 'away', 'busy', 'offline'] as const).map((status) => (
               <button

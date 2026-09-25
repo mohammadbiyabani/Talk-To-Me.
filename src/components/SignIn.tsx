@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { TtmLogo } from './TtmLogo';
 import { UserProfile } from '../types/chat';
 import { LegalTerms } from './LegalTerms';
+import { SupabaseStatusBanner } from './SupabaseStatusBanner';
 import { 
   User, 
   ShieldCheck, 
@@ -82,6 +83,9 @@ export const SignIn: React.FC<SignInProps> = ({ onSignIn, onOpenLegalModal }) =>
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-emerald-500 selection:text-slate-950">
+      {/* Top Supabase Realtime Status Banner */}
+      <SupabaseStatusBanner />
+
       {/* Top Header */}
       <header className="border-b border-slate-800/80 px-6 py-4 bg-slate-950/70 backdrop-blur-md">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
