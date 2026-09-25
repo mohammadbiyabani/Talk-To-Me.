@@ -9,12 +9,14 @@ interface ChatDashboardProps {
   currentUser: UserProfile;
   onUpdateUser: (updatedUser: UserProfile) => void;
   onSignOut: () => void;
+  onOpenLegalTerms?: () => void;
 }
 
 export const ChatDashboard: React.FC<ChatDashboardProps> = ({
   currentUser,
   onUpdateUser,
   onSignOut,
+  onOpenLegalTerms,
 }) => {
   const [conversations, setConversations] = useState<Conversation[]>(INITIAL_CONVERSATIONS);
   const [activeConversationId, setActiveConversationId] = useState<string>(
@@ -232,6 +234,7 @@ export const ChatDashboard: React.FC<ChatDashboardProps> = ({
         onUpdateUserStatus={handleUpdateUserStatus}
         onSignOut={onSignOut}
         onStartNewChat={handleStartNewChat}
+        onOpenLegalTerms={onOpenLegalTerms}
       />
 
       {/* Center Chat Viewport */}

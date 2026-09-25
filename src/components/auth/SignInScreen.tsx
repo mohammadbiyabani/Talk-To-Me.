@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { TtmLogo } from '../TtmLogo';
 import { UserProfile } from '../../types/chat';
+import { LegalTerms } from '../LegalTerms';
 import { 
   ShieldCheck, 
   Lock, 
@@ -12,14 +13,20 @@ import {
   EyeOff, 
   User, 
   Mail, 
-  AlertCircle
+  AlertCircle,
+  FileText,
+  Scale
 } from 'lucide-react';
 
 interface SignInScreenProps {
   onSignIn: (user: UserProfile) => void;
+  onOpenLegalTerms?: () => void;
 }
 
-export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignIn }) => {
+export const SignInScreen: React.FC<SignInScreenProps> = ({ 
+  onSignIn,
+  onOpenLegalTerms 
+}) => {
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('mohammadbiyabani126@gmail.com');
   const [displayName, setDisplayName] = useState('Mohammad B.');
@@ -28,9 +35,24 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignIn }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Mandatory Terms & Privacy state agreement
+  const [agreedToTerms, setAgreedToTerms] = useState<boolean>(false);
+  const [showLegalModal, setShowLegalModal] = useState<boolean>(false);
+  const [legalModalTab, setLegalModalTab] = useState<'all' | 'terms' | 'privacy' | 'dpdp'>('all');
+
+  const openLegalModalWithTab = (tab: 'all' | 'terms' | 'privacy' | 'dpdp') => {
+    setLegalModalTab(tab);
+    setShowLegalModal(true);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!agreedToTerms) {
+      setError('You must confirm that you agree to the Terms & Conditions and Privacy Policy to proceed.');
+      return;
+    }
 
     if (!email.trim() || !email.includes('@')) {
       setError('Please provide a valid email address.');
@@ -54,14 +76,21 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignIn }) => {
         status: 'online',
         safetyNumber: '48921-03948-28104-94021-39481-94820',
         joinDate: 'September 2026',
+        hasAcceptedTerms: true,
+        termsAcceptedAt: new Date().toISOString(),
       };
       onSignIn(user);
     }, 450);
   };
 
   const handleGoogleSignIn = () => {
-    setIsLoading(true);
     setError(null);
+    if (!agreedToTerms) {
+      setError('Please accept the Terms & Conditions and Privacy Policy before continuing with Google.');
+      return;
+    }
+
+    setIsLoading(true);
 
     setTimeout(() => {
       setIsLoading(false);
@@ -73,12 +102,16 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignIn }) => {
         status: 'online',
         safetyNumber: '48921-03948-28104-94021-39481-94820',
         joinDate: 'September 2026',
+        hasAcceptedTerms: true,
+        termsAcceptedAt: new Date().toISOString(),
       };
       onSignIn(user);
     }, 400);
   };
 
   const handleDemoSignIn = (name: string, mail: string, color: string) => {
+    // For quick demo, if not checked, auto-agree and sign in
+    setAgreedToTerms(true);
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
@@ -90,6 +123,8 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignIn }) => {
         status: 'online',
         safetyNumber: '73920-19482-94810-38491-20394-81920',
         joinDate: 'September 2026',
+        hasAcceptedTerms: true,
+        termsAcceptedAt: new Date().toISOString(),
       });
     }, 300);
   };
@@ -109,9 +144,19 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignIn }) => {
             </span>
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-mono text-emerald-400">Signal Protocol v3</span>
+          <div className="flex items-center gap-3 text-xs text-slate-400">
+            <button
+              type="button"
+              onClick={() => openLegalModalWithTab('all')}
+              className="text-xs text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-1"
+            >
+              <Scale className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden sm:inline">Legal Compliance</span>
+            </button>
+            <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
+              <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="font-mono text-emerald-400">Signal Protocol v3</span>
+            </div>
           </div>
         </div>
       </header>
@@ -139,7 +184,11 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignIn }) => {
               type="button"
               onClick={handleGoogleSignIn}
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-3 py-2.5 px-4 bg-slate-800 hover:bg-slate-700/80 border border-slate-700 rounded-xl text-sm font-medium text-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50 shadow-sm"
+              className={`w-full flex items-center justify-center gap-3 py-2.5 px-4 border rounded-xl text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm ${
+                !agreedToTerms
+                  ? 'bg-slate-850 hover:bg-slate-800 border-slate-800 text-slate-300'
+                  : 'bg-slate-800 hover:bg-slate-700/80 border-slate-700 text-slate-100'
+              }`}
             >
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                 <path
@@ -176,9 +225,9 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignIn }) => {
 
             {/* Error Message */}
             {error && (
-              <div className="mb-4 p-3 rounded-lg bg-rose-950/60 border border-rose-800/80 text-rose-300 text-xs flex items-center gap-2">
+              <div className="mb-4 p-3 rounded-lg bg-rose-950/60 border border-rose-800/80 text-rose-300 text-xs flex items-center gap-2 animate-fade-in">
                 <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
-                <span>{error}</span>
+                <span className="flex-1 leading-normal">{error}</span>
               </div>
             )}
 
@@ -255,21 +304,72 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignIn }) => {
                 </div>
               </div>
 
-              {/* Submit CTA */}
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-950/50 hover:shadow-emerald-900/40 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-emerald-400"
-              >
-                {isLoading ? (
-                  <span className="inline-block w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <span>{authMode === 'signin' ? 'Sign In' : 'Create Account'}</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
+              {/* Mandatory Confirmation Box */}
+              <div className="pt-1">
+                <label className={`flex items-start gap-2.5 p-3 rounded-xl border transition-all cursor-pointer select-none ${
+                  agreedToTerms
+                    ? 'bg-emerald-950/20 border-emerald-800/60 text-slate-200'
+                    : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-400'
+                }`}>
+                  <input
+                    type="checkbox"
+                    id="mandatory-terms-checkbox"
+                    checked={agreedToTerms}
+                    onChange={(e) => {
+                      setAgreedToTerms(e.target.checked);
+                      if (error && error.includes('Terms')) setError(null);
+                    }}
+                    className="mt-0.5 w-4 h-4 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-slate-950 accent-emerald-500 cursor-pointer shrink-0"
+                  />
+                  <div className="text-xs leading-normal">
+                    <span>
+                      I agree to the{' '}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          openLegalModalWithTab('all');
+                        }}
+                        className="text-emerald-400 hover:text-emerald-300 font-semibold underline underline-offset-2 transition-colors focus:outline-none"
+                      >
+                        Terms of Service &amp; Privacy Policy
+                      </button>
+                    </span>
+                    <span className="block text-[11px] text-slate-500 mt-1">
+                      Includes GDPR, CCPA &amp; India DPDP Act 2023 compliance with statutory Grievance Redressal.
+                    </span>
+                  </div>
+                </label>
+              </div>
+
+              {/* Submit CTA - Strictly disabled until agreed */}
+              <div className="space-y-1.5">
+                <button
+                  type="submit"
+                  disabled={isLoading || !agreedToTerms}
+                  className={`w-full py-2.5 px-4 font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition-all shadow-lg focus:outline-none focus:ring-2 ${
+                    !agreedToTerms
+                      ? 'bg-slate-800/80 text-slate-500 border border-slate-800 cursor-not-allowed shadow-none'
+                      : 'bg-emerald-600 hover:bg-emerald-500 text-slate-950 shadow-emerald-950/50 hover:shadow-emerald-900/40 focus:ring-emerald-400 cursor-pointer'
+                  }`}
+                >
+                  {isLoading ? (
+                    <span className="inline-block w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <span>{authMode === 'signin' ? 'Sign In' : 'Create Account'}</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+
+                {!agreedToTerms && (
+                  <p className="text-[11px] text-center text-slate-500 font-mono">
+                    Check the agreement box above to enable {authMode === 'signin' ? 'Sign In' : 'Account Creation'}
+                  </p>
                 )}
-              </button>
+              </div>
             </form>
 
             {/* Mode switch */}
@@ -344,9 +444,28 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({ onSignIn }) => {
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800/80 py-4 px-6 text-center text-xs text-slate-500">
-        Talk To Me (TTM) &bull; Zero-Knowledge Encrypted Communication
+      <footer className="border-t border-slate-800/80 py-4 px-6 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2 max-w-6xl mx-auto w-full">
+        <span>Talk To Me (TTM) &bull; Zero-Knowledge Encrypted Communication</span>
+        <button
+          type="button"
+          onClick={() => openLegalModalWithTab('all')}
+          className="text-emerald-400 hover:text-emerald-300 underline font-medium cursor-pointer"
+        >
+          Terms of Service &amp; Privacy Policy
+        </button>
       </footer>
+
+      {/* Dedicated Legal Modal */}
+      <LegalTerms
+        isOpen={showLegalModal}
+        onClose={() => setShowLegalModal(false)}
+        onAccept={() => {
+          setAgreedToTerms(true);
+          if (error && error.includes('Terms')) setError(null);
+        }}
+        hasAccepted={agreedToTerms}
+        initialTab={legalModalTab}
+      />
     </div>
   );
 };

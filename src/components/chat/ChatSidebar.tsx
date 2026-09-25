@@ -13,7 +13,8 @@ import {
   Check, 
   CheckCheck,
   UserPlus,
-  X
+  X,
+  Scale
 } from 'lucide-react';
 
 interface ChatSidebarProps {
@@ -24,6 +25,7 @@ interface ChatSidebarProps {
   onUpdateUserStatus: (status: UserProfile['status']) => void;
   onSignOut: () => void;
   onStartNewChat: (contactName: string) => void;
+  onOpenLegalTerms?: () => void;
 }
 
 export const ChatSidebar: React.FC<ChatSidebarProps> = ({
@@ -34,6 +36,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   onUpdateUserStatus,
   onSignOut,
   onStartNewChat,
+  onOpenLegalTerms,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'unread' | 'pinned'>('all');
@@ -272,13 +275,25 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
         </div>
 
         {/* Action icons */}
-        <button
-          onClick={onSignOut}
-          title="Sign Out"
-          className="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800/80 rounded-lg transition-colors"
-        >
-          <LogOut className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          {onOpenLegalTerms && (
+            <button
+              onClick={onOpenLegalTerms}
+              title="Terms of Service & Privacy Policy"
+              className="p-2 text-slate-400 hover:text-emerald-400 hover:bg-slate-800/80 rounded-lg transition-colors"
+            >
+              <Scale className="w-4 h-4" />
+            </button>
+          )}
+
+          <button
+            onClick={onSignOut}
+            title="Sign Out"
+            className="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800/80 rounded-lg transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+        </div>
 
         {/* Status Dropdown Popover */}
         {showStatusMenu && (

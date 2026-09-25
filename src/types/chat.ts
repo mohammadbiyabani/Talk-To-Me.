@@ -6,6 +6,8 @@ export interface UserProfile {
   status: 'online' | 'away' | 'busy' | 'offline';
   safetyNumber?: string;
   joinDate?: string;
+  hasAcceptedTerms?: boolean;
+  termsAcceptedAt?: string;
 }
 
 export interface ChatMessage {
